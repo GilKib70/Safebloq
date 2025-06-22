@@ -1,59 +1,54 @@
 import streamlit as st
-import pandas as pd
 import matplotlib.pyplot as plt
 
-# Custom page config and background
-st.set_page_config(page_title="Safebloq MVP", layout="wide")
+# Page setup
+st.set_page_config(page_title="Safebloq Security Dashboard", layout="wide")
 
-# Inject background color (white + soft blue)
-st.markdown("""
-    <style>
-        body {
-            background: linear-gradient(to bottom right, #ffffff, #e6f0ff);
-        }
-    </style>
-""", unsafe_allow_html=True)
+# CSS styling
+with open("assets/style.css") as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-st.title("🛡️ Safebloq - Zero Trust Cybersecurity for SMBs")
-st.markdown("A simple dashboard MVP showcasing real-time security visibility for small businesses.")
-
-# --- Security Events Table ---
-st.header("🚨 Detected Security Events")
-data = {
-    "Time": ["09:01", "09:14", "09:26", "10:05"],
-    "Event Type": ["Phishing Attempt", "Suspicious Login", "Ransomware Blocked", "USB Access Denied"],
-    "Device": ["Laptop-01", "Mobile-Admin", "Desktop-Accounting", "Tablet-Warehouse"],
-    "Status": ["Blocked", "Alert", "Quarantined", "Blocked"]
-}
-df = pd.DataFrame(data)
-st.dataframe(df)
-
-# --- Incident Overview Chart ---
-st.header("📊 Incident Overview")
-chart_data = pd.DataFrame({
-    "Blocked": [12, 18, 24, 30],
-    "Quarantined": [5, 6, 4, 8],
-    "Alerts": [3, 4, 5, 7]
-}, index=["Mon", "Tue", "Wed", "Thu"])
-st.bar_chart(chart_data)
-
-# --- Security Health Metrics ---
-st.header("✅ Security Health")
-col1, col2, col3 = st.columns(3)
-col1.metric("Devices Secured", "56", "+6")
-col2.metric("Threats Blocked", "102", "+12")
-col3.metric("Users Protected", "43", "+3")
+# Title
+st.markdown("## 🔐 Safebloq Security Dashboard")
 
 # --- Security Score Pie Chart ---
-st.header("🔒 Security Score Breakdown")
+st.markdown("### Security Score")
+fig, ax = plt.subplots()
+labels = ['Success', 'Soft', 'Alert']
+sizes = [75, 15, 10]
+colors = ['#4CAF50', '#FFC107', '#F44336']
+ax.pie(sizes, labels=labels, colors=colors, startangle=90, autopct='%1.1f%%', wedgeprops={'edgecolor': 'white'})
+ax.axis('equal')
+st.pyplot(fig)
 
-labels = ['Protection', 'Response', 'Detection', 'Compliance']
-sizes = [35, 25, 25, 15]
-colors = ['#1f77b4', '#2ca02c', '#ff7f0e', '#d62728']
+# --- Live Alerts ---
+st.markdown("### 🚨 Live Alerts")
+alerts = {
+    "Active Threats": 3,
+    "Unpatched Systems": 5,
+    "Suspicious Logins": 2
+}
+for key, value in alerts.items():
+    st.info(f"{key}: {value}")
 
-fig1, ax1 = plt.subplots()
-ax1.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90, colors=colors)
-ax1.axis('equal')
-st.pyplot(fig1)
+# --- Asset Table ---
+st.markdown("### 🧱 Asset Table")
+st.dataframe({
+    'Asset Type': ['User', 'Device', 'Endpoint'],
+    'Count': [50, 30, 20],
+    'Secure %': [80, 70, 65]
+})
 
-st.info("This MVP demo shows simulated activity. Real-time integration will occur in beta release.")
+# --- Compliance Reports ---
+st.markdown("### 📑 Compliance Reports")
+st.success("All major compliance reports are up to date.")
+
+# --- Settings & Actions ---
+st.markdown("### ⚙️ Quick Actions")
+col1, col2 = st.columns(2)
+with col1:
+    st.button("Enable MFA")
+    st.button("Invite Team")
+with col2:
+    st.button("Run Security Scan")
+    st.button("Auto-Fix Issues")
