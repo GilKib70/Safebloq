@@ -1,0 +1,18 @@
+body {
+    background-color: #f0f5fb;
+}
+
+h1, h2, h3 {
+    color: #003366;
+}
+
+.stButton>button {
+    background-color: #0056b3;
+    color: white;
+    border-radius: 8px;
+}
+
+.stDataFrame {
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
