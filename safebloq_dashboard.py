@@ -2,9 +2,16 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from matplotlib.patches import Wedge
+
+# Check if plotly is available, otherwise use matplotlib fallback
+
+try:
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+PLOTLY_AVAILABLE = True
+except ImportError:
+PLOTLY_AVAILABLE = False
+st.warning(“Plotly not available. Using matplotlib fallback.”)
 
 # — Streamlit Page Config —
 
@@ -336,6 +343,7 @@ padding: 0;
 
 def create_security_score_gauge(score=75):
 “”“Create a circular gauge for security score”””
+if PLOTLY_AVAILABLE:
 fig = go.Figure(go.Indicator(
 mode = “gauge+number”,
 value = score,
@@ -361,14 +369,37 @@ gauge = {
 ))
 
 ```
-fig.update_layout(
-    height=300,
-    margin=dict(l=20, r=20, t=20, b=20),
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)"
-)
-
-return fig
+    fig.update_layout(
+        height=300,
+        margin=dict(l=20, r=20, t=20, b=20),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)"
+    )
+    return fig
+else:
+    # Matplotlib fallback
+    fig, ax = plt.subplots(figsize=(6, 4))
+    
+    # Create a simple gauge using matplotlib
+    theta = np.linspace(0, np.pi, 100)
+    r = 1
+    
+    # Background arc
+    ax.plot(r * np.cos(theta), r * np.sin(theta), 'lightgray', linewidth=10)
+    
+    # Score arc
+    score_theta = np.linspace(0, np.pi * (score/100), int(score))
+    ax.plot(r * np.cos(score_theta), r * np.sin(score_theta), '#4299E1', linewidth=10)
+    
+    # Add score text
+    ax.text(0, -0.3, f'{score}%', ha='center', va='center', fontsize=24, fontweight='bold')
+    
+    ax.set_xlim(-1.2, 1.2)
+    ax.set_ylim(-0.5, 1.2)
+    ax.set_aspect('equal')
+    ax.axis('off')
+    
+    return fig
 ```
 
 def create_threat_trends_chart():
@@ -381,58 +412,77 @@ user_data = [80, 30, 0]  # User threats
 device_data = [30, 60, 75]  # Device threats  
 ransomware_data = [30, 45, 85]  # Ransomware threats
 
-fig = go.Figure()
-
-# Add bars for each threat type
-fig.add_trace(go.Bar(
-    x=months,
-    y=user_data,
-    name='User',
-    marker_color='#4299E1',
-    width=0.6
-))
-
-fig.add_trace(go.Bar(
-    x=months,
-    y=device_data,
-    name='Device', 
-    marker_color='#F56565',
-    width=0.6
-))
-
-fig.add_trace(go.Bar(
-    x=months,
-    y=ransomware_data,
-    name='Ransomware',
-    marker_color='#48BB78',
-    width=0.6
-))
-
-fig.update_layout(
-    height=250,
-    margin=dict(l=20, r=20, t=20, b=20),
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    showlegend=False,
-    xaxis=dict(
-        showgrid=False,
-        showline=False,
-        zeroline=False
-    ),
-    yaxis=dict(
-        showgrid=True,
-        gridwidth=1,
-        gridcolor='#E2E8F0',
-        showline=False,
-        zeroline=False,
-        range=[0, 100]
-    ),
-    barmode='group',
-    bargap=0.3,
-    bargroupgap=0.1
-)
-
-return fig
+if PLOTLY_AVAILABLE:
+    fig = go.Figure()
+    
+    # Add bars for each threat type
+    fig.add_trace(go.Bar(
+        x=months,
+        y=user_data,
+        name='User',
+        marker_color='#4299E1',
+        width=0.6
+    ))
+    
+    fig.add_trace(go.Bar(
+        x=months,
+        y=device_data,
+        name='Device', 
+        marker_color='#F56565',
+        width=0.6
+    ))
+    
+    fig.add_trace(go.Bar(
+        x=months,
+        y=ransomware_data,
+        name='Ransomware',
+        marker_color='#48BB78',
+        width=0.6
+    ))
+    
+    fig.update_layout(
+        height=250,
+        margin=dict(l=20, r=20, t=20, b=20),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        showlegend=False,
+        xaxis=dict(
+            showgrid=False,
+            showline=False,
+            zeroline=False
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridwidth=1,
+            gridcolor='#E2E8F0',
+            showline=False,
+            zeroline=False,
+            range=[0, 100]
+        ),
+        barmode='group',
+        bargap=0.3,
+        bargroupgap=0.1
+    )
+    return fig
+else:
+    # Matplotlib fallback
+    fig, ax = plt.subplots(figsize=(8, 4))
+    
+    x = np.arange(len(months))
+    width = 0.25
+    
+    ax.bar(x - width, user_data, width, label='User', color='#4299E1')
+    ax.bar(x, device_data, width, label='Device', color='#F56565')
+    ax.bar(x + width, ransomware_data, width, label='Ransomware', color='#48BB78')
+    
+    ax.set_xlabel('Months')
+    ax.set_ylabel('Threat Level')
+    ax.set_xticks(x)
+    ax.set_xticklabels(months)
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    
+    return fig
 ```
 
 def create_live_alerts_chart():
@@ -440,57 +490,73 @@ def create_live_alerts_chart():
 months = [‘April’, ‘May’, ‘Jun’, ‘June’]
 
 ```
-fig = go.Figure()
-
-# Add bars for different alert types
-fig.add_trace(go.Bar(
-    x=months,
-    y=[85, 75, 95, 70],
-    name='Active Threats',
-    marker_color='#4299E1',
-    width=0.6
-))
-
-fig.add_trace(go.Bar(
-    x=months,
-    y=[70, 60, 80, 65],
-    name='Phishing Attempts',
-    marker_color='#F6AD55',
-    width=0.6
-))
-
-fig.add_trace(go.Bar(
-    x=months,
-    y=[60, 50, 70, 55],
-    name='Device Breaches',
-    marker_color='#F56565',
-    width=0.6
-))
-
-fig.update_layout(
-    height=200,
-    margin=dict(l=20, r=20, t=20, b=20),
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    showlegend=False,
-    xaxis=dict(
-        showgrid=False,
-        showline=False,
-        zeroline=False
-    ),
-    yaxis=dict(
-        showgrid=True,
-        gridwidth=1,
-        gridcolor='#E2E8F0',
-        showline=False,
-        zeroline=False
-    ),
-    barmode='group',
-    bargap=0.3,
-    bargroupgap=0.1
-)
-
-return fig
+if PLOTLY_AVAILABLE:
+    fig = go.Figure()
+    
+    # Add bars for different alert types
+    fig.add_trace(go.Bar(
+        x=months,
+        y=[85, 75, 95, 70],
+        name='Active Threats',
+        marker_color='#4299E1',
+        width=0.6
+    ))
+    
+    fig.add_trace(go.Bar(
+        x=months,
+        y=[70, 60, 80, 65],
+        name='Phishing Attempts',
+        marker_color='#F6AD55',
+        width=0.6
+    ))
+    
+    fig.add_trace(go.Bar(
+        x=months,
+        y=[60, 50, 70, 55],
+        name='Device Breaches',
+        marker_color='#F56565',
+        width=0.6
+    ))
+    
+    fig.update_layout(
+        height=200,
+        margin=dict(l=20, r=20, t=20, b=20),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        showlegend=False,
+        xaxis=dict(
+            showgrid=False,
+            showline=False,
+            zeroline=False
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridwidth=1,
+            gridcolor='#E2E8F0',
+            showline=False,
+            zeroline=False
+        ),
+        barmode='group',
+        bargap=0.3,
+        bargroupgap=0.1
+    )
+    return fig
+else:
+    # Matplotlib fallback
+    fig, ax = plt.subplots(figsize=(6, 3))
+    
+    x = np.arange(len(months))
+    width = 0.25
+    
+    ax.bar(x - width, [85, 75, 95, 70], width, label='Active Threats', color='#4299E1')
+    ax.bar(x, [70, 60, 80, 65], width, label='Phishing Attempts', color='#F6AD55')
+    ax.bar(x + width, [60, 50, 70, 55], width, label='Device Breaches', color='#F56565')
+    
+    ax.set_xticks(x)
+    ax.set_xticklabels(months)
+    ax.grid(True, alpha=0.3)
+    
+    return fig
 ```
 
 # — Main Dashboard Layout —
@@ -561,7 +627,10 @@ st.markdown(”””
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
 gauge_fig = create_security_score_gauge(75)
+if PLOTLY_AVAILABLE:
 st.plotly_chart(gauge_fig, use_container_width=True)
+else:
+st.pyplot(gauge_fig, use_container_width=True)
 
 # Main Content Grid
 
@@ -632,7 +701,10 @@ st.markdown("""
 
 # Chart for Live Alerts
 live_alerts_fig = create_live_alerts_chart()
-st.plotly_chart(live_alerts_fig, use_container_width=True)
+if PLOTLY_AVAILABLE:
+    st.plotly_chart(live_alerts_fig, use_container_width=True)
+else:
+    st.pyplot(live_alerts_fig, use_container_width=True)
 ```
 
 # Threat Trends Section (Middle Column)
@@ -646,7 +718,10 @@ st.markdown(”””
 
 ```
 threat_fig = create_threat_trends_chart()
-st.plotly_chart(threat_fig, use_container_width=True)
+if PLOTLY_AVAILABLE:
+    st.plotly_chart(threat_fig, use_container_width=True)
+else:
+    st.pyplot(threat_fig, use_container_width=True)
 
 # Reports Section
 st.markdown("""
@@ -700,7 +775,7 @@ st.markdown("""
         <div class="card-title">Support</div>
         <div class="support-item">
             <div class="support-icon support-docs">📚</div>
-            <span>Support Docs</span>Ju
+            <span>Support Docs</span>
             <div class="chevron">›</div>
         </div>
         <div class="support-item">
