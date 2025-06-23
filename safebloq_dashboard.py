@@ -17,27 +17,25 @@ if "logged_in" not in st.session_state:
 # Login Page
 # ------------------------
 def login():
-    st.title("🔐 Safebloq Secure Login")
-    st.subheader("Zero Trust Cybersecurity for SMBs")
+    st.title("Safebloq")
 
-    with st.form("login_form"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        submitted = st.form_submit_button("Login")
+    st.markdown("## 🔐 Login to continue")
 
-        if submitted:
-            if username == USERNAME and password == PASSWORD:
-                st.session_state.logged_in = True
-                st.success("Login successful")
-                st.experimental_rerun()
-            else:
-                st.error("Invalid credentials")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    login_button = st.button("Login")
+
+    if login_button:
+        if username == USERNAME and password == PASSWORD:
+            st.session_state.logged_in = True
+        else:
+            st.error("Invalid username or password.")
 
 # ------------------------
 # Sidebar Navigation
 # ------------------------
 def sidebar():
-    menu = st.sidebar.selectbox("📁 Navigate", ["Dashboard", "Assets", "Alerts", "Logout"])
+    menu = st.sidebar.selectbox("📁 Menu", ["Dashboard", "Assets", "Alerts", "Logout"])
     return menu
 
 # ------------------------
@@ -45,21 +43,20 @@ def sidebar():
 # ------------------------
 def dashboard():
     st.title("Safebloq")
-    st.subheader("Zero Trust for SMBs – Secure Everything, Everywhere")
 
     # Security Score
-    st.markdown("### 🔵 Overall Security Score")
+    st.markdown("### 🔵 Security Score")
     st.progress(0.72)
 
-    # Endpoint Status Section
-    st.markdown("### 🖥️ Endpoint Protection Overview")
+    # Endpoint Protection
+    st.markdown("### 🖥️ Endpoint Overview")
     col1, col2, col3 = st.columns(3)
     col1.metric("Protected Devices", "43", "+5")
     col2.metric("Unprotected Devices", "7", "-2")
     col3.metric("Devices Needing Attention", "3", "⚠")
 
-    # Threat Bar Chart
-    st.markdown("### 📊 Threat Trends (Last 3 Months)")
+    # Threat Bar Chart (3 months)
+    st.markdown("### 📊 Threats Over Last 3 Months")
     threat_data = pd.DataFrame({
         "Month": ["April", "May", "June"],
         "Malware": [12, 8, 15],
@@ -75,7 +72,7 @@ def dashboard():
     ax.set_xticks(months)
     ax.set_xticklabels(threat_data["Month"])
     ax.set_ylabel("Incidents")
-    ax.set_title("Threat Categories by Month")
+    ax.set_title("Monthly Threat Categories")
     ax.legend()
     st.pyplot(fig)
 
@@ -83,9 +80,10 @@ def dashboard():
 # Assets Page
 # ------------------------
 def assets():
-    st.title("📋 Asset Protection Summary")
+    st.title("Safebloq")
+    st.markdown("### 📋 Asset Overview")
     asset_data = pd.DataFrame({
-        "Asset Name": ["Laptop-001", "Desktop-023", "Mobile-112", "Tablet-019"],
+        "Asset": ["Laptop-001", "Desktop-023", "Mobile-112", "Tablet-019"],
         "Status": ["Protected", "Needs Update", "Protected", "Unprotected"],
         "Last Checked": ["Today", "Yesterday", "Today", "2 days ago"]
     })
@@ -95,32 +93,32 @@ def assets():
 # Alerts Page
 # ------------------------
 def alerts():
-    st.title("🚨 Live Security Alerts")
+    st.title("Safebloq")
+    st.markdown("### 🚨 Security Alerts")
     alerts = [
-        {"time": "10:21 AM", "alert": "New phishing attempt blocked on user device"},
-        {"time": "9:10 AM", "alert": "Outdated software detected on workstation #22"},
-        {"time": "Yesterday", "alert": "Ransomware attempt blocked from suspicious IP"},
+        {"time": "10:21 AM", "alert": "Phishing attempt blocked on user device"},
+        {"time": "9:10 AM", "alert": "Outdated software on workstation #22"},
+        {"time": "Yesterday", "alert": "Ransomware blocked from suspicious IP"},
     ]
     for alert in alerts:
         st.info(f"[{alert['time']}] {alert['alert']}")
 
 # ------------------------
-# Main App Logic
+# Main App
 # ------------------------
 def main():
     if not st.session_state.logged_in:
         login()
     else:
-        choice = sidebar()
+        page = sidebar()
 
-        if choice == "Dashboard":
+        if page == "Dashboard":
             dashboard()
-        elif choice == "Assets":
+        elif page == "Assets":
             assets()
-        elif choice == "Alerts":
+        elif page == "Alerts":
             alerts()
-        elif choice == "Logout":
+        elif page == "Logout":
             st.session_state.logged_in = False
-            st.experimental_rerun()
 
 main()
