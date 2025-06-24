@@ -1,121 +1,100 @@
-
 import streamlit as st
+import plotly.graph_objects as go
 import pandas as pd
-import plotly.express as px
 
-# ------------------ Page Config ------------------
-st.set_page_config(page_title="Safebloq", layout="wide", initial_sidebar_state="expanded")
+# Set page config
+st.set_page_config(page_title="Safebloq", layout="wide")
 
-# ------------------ Session State ------------------
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
+# Apply dark mode styling
+st.markdown("""
+    <style>
+        body {
+            background-color: #0d1b2a;
+            color: white;
+        }
+        .block-container {
+            padding-top: 2rem;
+        }
+        .css-1d391kg {background-color: #1b263b;}
+        .stButton>button {
+            background-color: #1c74d9;
+            color: white;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
-# ------------------ Login Function ------------------
-def login():
-    st.markdown("### Login to Safebloq")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-    if st.button("Login"):
-        if username == "admin" and password == "admin":
-            st.session_state.logged_in = True
-            st.experimental_rerun()
-        else:
-            st.error("Invalid credentials")
+# --- HEADER ---
+col1, col2 = st.columns([8, 2])
+with col1:
+    st.markdown("## <span style='color:white;'>Safebloq</span>", unsafe_allow_html=True)
+with col2:
+    st.markdown("#### 👤 Quick Actions")
 
-# ------------------ Sidebar Menu ------------------
-def render_sidebar():
-    with st.sidebar:
-        st.markdown("## 📡 Menu")
-        menu = st.radio("Navigation", [
-            "Dashboard",
-            "Report",
-            "Add Device",
-            "Invite Team",
-            "Support",
-        ])
+st.markdown("---")
 
-        st.markdown("---")
-        st.markdown("#### 👤 Profile")
-        st.markdown("**User:** admin")
-        st.markdown("**Role:** Administrator")
+# --- SECURITY SCORE ---
+st.markdown("### 🔐 Security Score")
+fig = go.Figure(go.Indicator(
+    mode="gauge+number",
+    value=75,
+    domain={'x': [0, 1], 'y': [0, 1]},
+    gauge={
+        'axis': {'range': [0, 100]},
+        'bar': {'color': "darkblue"},
+        'steps': [
+            {'range': [0, 50], 'color': "red"},
+            {'range': [50, 75], 'color': "orange"},
+            {'range': [75, 100], 'color': "lightblue"}
+        ],
+    },
+    number={'suffix': "%"}
+))
+st.plotly_chart(fig, use_container_width=True)
 
-    return menu
+# --- LIVE ALERTS ---
+st.markdown("### 🚨 Live Alerts")
+alerts = {
+    "Active Threats": 3,
+    "Phishing Attempts": 5,
+    "Unsafe Devices": 3,
+    "Outbound Denials": 1
+}
+alert_cols = st.columns(len(alerts))
+for i, (alert, count) in enumerate(alerts.items()):
+    alert_cols[i].metric(label=alert, value=count)
 
-# ------------------ Dashboard Page ------------------
-def render_dashboard():
-    st.markdown("## Safebloq")
+# --- THREAT TRENDS ---
+st.markdown("### 📊 Threat Trends (April - June)")
+trend_data = {
+    "Month": ["April", "May", "June"],
+    "User": [80, 65, 30],
+    "Device": [30, 50, 60],
+    "Ransomware": [20, 25, 45]
+}
+df = pd.DataFrame(trend_data)
+fig_bar = go.Figure()
+fig_bar.add_trace(go.Bar(name='User', x=df["Month"], y=df["User"]))
+fig_bar.add_trace(go.Bar(name='Device', x=df["Month"], y=df["Device"]))
+fig_bar.add_trace(go.Bar(name='Ransomware', x=df["Month"], y=df["Ransomware"]))
+fig_bar.update_layout(barmode='group', plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
+st.plotly_chart(fig_bar, use_container_width=True)
 
-    # ----- Metrics -----
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Active Threats", "12", "+3 today")
-    col2.metric("Phishing Attempts", "7", "+2 today")
-    col3.metric("Unsafe Devices", "5", "-1 today")
+# --- ENDPOINT TABLE ---
+st.markdown("### 🖥️ Endpoint Table")
+endpoint_data = {
+    "Alert": ["Red eds", "Excessive admin logons"],
+    "Details": ["R77 – Invalid users", "Multiple failed logons"]
+}
+st.table(pd.DataFrame(endpoint_data))
 
-    col4, col5 = st.columns(2)
-    col4.metric("Outbound Denials", "19", "+5 today")
-    col5.metric("Security Score", "78%", "-4% since last week")
+# --- REPORTS ---
+st.markdown("### 📁 Reports")
+st.button("📋 Compliance Reports")
+st.button("💰 Savings Calculator")
 
-    # ----- Bar Chart -----
-    st.markdown("### Threat Trends (Last 3 Months)")
-    data = {
-        "Month": ["April", "April", "April", "May", "May", "May", "June", "June", "June"],
-        "Threat Type": ["Malware", "Phishing", "Device", "Malware", "Phishing", "Device", "Malware", "Phishing", "Device"],
-        "Count": [22, 12, 8, 30, 17, 10, 25, 14, 6]
-    }
-    df = pd.DataFrame(data)
-    fig = px.bar(df, x="Month", y="Count", color="Threat Type", barmode="group",
-                 title="Threats by Type Over Last 3 Months", template="plotly_dark")
-    st.plotly_chart(fig, use_container_width=True)
-
-# ------------------ Reports Page ------------------
-def render_reports():
-    st.markdown("## 📄 Compliance Reports")
-    st.info("Download compliance reports, audit logs and certificates here. [Coming soon]")
-
-# ------------------ Add Device Page ------------------
-def render_add_device():
-    st.markdown("## ➕ Add a Device")
-    st.success("You can register a device with Wazuh agent. [Feature coming soon]")
-
-# ------------------ Invite Team Page ------------------
-def render_invite_team():
-    st.markdown("## 👥 Invite Team Members")
-    with st.form("invite_form"):
-        email = st.text_input("Team member email")
-        role = st.selectbox("Assign role", ["Viewer", "Editor", "Admin"])
-        submitted = st.form_submit_button("Send Invite")
-        if submitted:
-            st.success(f"Invitation sent to {email} as {role}")
-
-# ------------------ Support Page ------------------
-def render_support():
-    st.markdown("## 🛠️ Support Center")
-    st.markdown("### 📚 Support Docs")
-    st.markdown("- [How to set up your environment](#)")
-    st.markdown("- [Wazuh integration guide](#)")
-    st.markdown("### 📖 User Docs")
-    st.markdown("- [User dashboard walkthrough](#)")
-    st.markdown("- [Managing roles and devices](#)")
-
-# ------------------ App Flow ------------------
-def main():
-    if not st.session_state.logged_in:
-        login()
-        return
-
-    selected = render_sidebar()
-
-    if selected == "Dashboard":
-        render_dashboard()
-    elif selected == "Report":
-        render_reports()
-    elif selected == "Add Device":
-        render_add_device()
-    elif selected == "Invite Team":
-        render_invite_team()
-    elif selected == "Support":
-        render_support()
-
-# Run the App
-if __name__ == "__main__":
-    main()
+# --- SUPPORT SECTION ---
+st.markdown("### 🛠️ Support")
+support_cols = st.columns(3)
+support_cols[0].button("📖 Support Docs")
+support_cols[1].button("👩 Susan Conn")
+support_cols[2].button("📡 Service Status")
