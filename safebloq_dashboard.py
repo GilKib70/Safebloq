@@ -1,100 +1,93 @@
 import streamlit as st
-import plotly.graph_objects as go
 import pandas as pd
+import plotly.graph_objects as go
 
-# Set page config
-st.set_page_config(page_title="Safebloq", layout="wide")
+st.set_page_config(page_title="Safebloq Dashboard", layout="wide")
 
-# Apply dark mode styling
-st.markdown("""
+# --- Toggle: Dark Mode ---
+dark_mode = st.sidebar.toggle("🌙 Dark Mode", value=True)
+
+if dark_mode:
+    background_color = "#0e1117"
+    text_color = "white"
+else:
+    background_color = "#f5f7fa"
+    text_color = "black"
+
+# Custom styling
+st.markdown(
+    f"""
     <style>
-        body {
-            background-color: #0d1b2a;
-            color: white;
-        }
-        .block-container {
-            padding-top: 2rem;
-        }
-        .css-1d391kg {background-color: #1b263b;}
-        .stButton>button {
-            background-color: #1c74d9;
-            color: white;
-        }
+        .reportview-container {{
+            background-color: {background_color};
+            color: {text_color};
+        }}
+        .sidebar .sidebar-content {{
+            background-color: #1e1e1e;
+        }}
     </style>
-""", unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True
+)
 
-# --- HEADER ---
-col1, col2 = st.columns([8, 2])
+# --- Header ---
+st.markdown(f"<h1 style='color: {text_color};'>🔒 Safebloq Dashboard</h1>", unsafe_allow_html=True)
+
+# --- Columns Layout ---
+col1, col2, col3 = st.columns([1.2, 1.5, 1.5])
+
+# --- Live Alerts ---
 with col1:
-    st.markdown("## <span style='color:white;'>Safebloq</span>", unsafe_allow_html=True)
+    st.subheader("🚨 Live Alerts")
+    st.markdown("🔴 **Active Threats:** 3")
+    st.markdown("🟠 **Unpatched Systems:** 3")
+    st.markdown("🔵 **Suspicious Logins:** 2")
+
+    st.divider()
+    st.subheader("🗂️ Asset Table")
+    st.table(pd.DataFrame({
+        "Asset Type": ["User", "Device", "Endpoint"],
+        "Count": [50, 30, 20]
+    }))
+
+# --- Security Score & Compliance ---
 with col2:
-    st.markdown("#### 👤 Quick Actions")
+    st.subheader("🛡️ Security Score")
 
-st.markdown("---")
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=82,
+        title={'text': "Security"},
+        gauge={
+            'axis': {'range': [0, 100]},
+            'bar': {'color': "green"},
+            'steps': [
+                {'range': [0, 50], 'color': "red"},
+                {'range': [50, 80], 'color': "orange"},
+                {'range': [80, 100], 'color': "blue"}
+            ]
+        }
+    ))
+    fig.update_layout(height=250, margin=dict(t=0, b=0, l=10, r=10))
+    st.plotly_chart(fig, use_container_width=True)
 
-# --- SECURITY SCORE ---
-st.markdown("### 🔐 Security Score")
-fig = go.Figure(go.Indicator(
-    mode="gauge+number",
-    value=75,
-    domain={'x': [0, 1], 'y': [0, 1]},
-    gauge={
-        'axis': {'range': [0, 100]},
-        'bar': {'color': "darkblue"},
-        'steps': [
-            {'range': [0, 50], 'color': "red"},
-            {'range': [50, 75], 'color': "orange"},
-            {'range': [75, 100], 'color': "lightblue"}
-        ],
-    },
-    number={'suffix': "%"}
-))
-st.plotly_chart(fig, use_container_width=True)
+    st.divider()
+    st.subheader("✅ Compliance Reports")
+    st.success("All major compliance reports are up to date.")
 
-# --- LIVE ALERTS ---
-st.markdown("### 🚨 Live Alerts")
-alerts = {
-    "Active Threats": 3,
-    "Phishing Attempts": 5,
-    "Unsafe Devices": 3,
-    "Outbound Denials": 1
-}
-alert_cols = st.columns(len(alerts))
-for i, (alert, count) in enumerate(alerts.items()):
-    alert_cols[i].metric(label=alert, value=count)
+# --- Quick Actions & Threats Pie ---
+with col3:
+    st.subheader("⚙️ Quick Actions")
+    st.button("Enable MFA")
+    st.button("Invite Team")
 
-# --- THREAT TRENDS ---
-st.markdown("### 📊 Threat Trends (April - June)")
-trend_data = {
-    "Month": ["April", "May", "June"],
-    "User": [80, 65, 30],
-    "Device": [30, 50, 60],
-    "Ransomware": [20, 25, 45]
-}
-df = pd.DataFrame(trend_data)
-fig_bar = go.Figure()
-fig_bar.add_trace(go.Bar(name='User', x=df["Month"], y=df["User"]))
-fig_bar.add_trace(go.Bar(name='Device', x=df["Month"], y=df["Device"]))
-fig_bar.add_trace(go.Bar(name='Ransomware', x=df["Month"], y=df["Ransomware"]))
-fig_bar.update_layout(barmode='group', plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
-st.plotly_chart(fig_bar, use_container_width=True)
-
-# --- ENDPOINT TABLE ---
-st.markdown("### 🖥️ Endpoint Table")
-endpoint_data = {
-    "Alert": ["Red eds", "Excessive admin logons"],
-    "Details": ["R77 – Invalid users", "Multiple failed logons"]
-}
-st.table(pd.DataFrame(endpoint_data))
-
-# --- REPORTS ---
-st.markdown("### 📁 Reports")
-st.button("📋 Compliance Reports")
-st.button("💰 Savings Calculator")
-
-# --- SUPPORT SECTION ---
-st.markdown("### 🛠️ Support")
-support_cols = st.columns(3)
-support_cols[0].button("📖 Support Docs")
-support_cols[1].button("👩 Susan Conn")
-support_cols[2].button("📡 Service Status")
+    st.divider()
+    st.subheader("📊 Threat Dashboard")
+    pie_fig = go.Figure(data=[
+        go.Pie(labels=["Active Threats", "Phishing Risks", "Breaches"],
+               values=[45, 35, 20],
+               marker_colors=["#1f77b4", "#00cc96", "red"])
+    ])
+    pie_fig.update_traces(textinfo='label+percent')
+    pie_fig.update_layout(height=300, margin=dict(t=10, b=10, l=10, r=10))
+    st.plotly_chart(pie_fig, use_container_width=True)
