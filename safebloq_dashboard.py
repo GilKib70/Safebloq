@@ -1,122 +1,82 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
+import plotly.graph_objects as go
 
-# Setup
-st.set_page_config(page_title="Safebloq", layout="wide")
-if "theme" not in st.session_state:
-    st.session_state.theme = "dark"
+# Page config
+st.set_page_config(page_title="Safebloq Dashboard", layout="wide", initial_sidebar_state="expanded")
 
-# Dark mode toggle
-def toggle_theme():
-    st.session_state.theme = "light" if st.session_state.theme == "dark" else "dark"
+# Styling
+st.markdown("""
+    <style>
+        body {
+            background-color: #0e1117;
+            color: white;
+        }
+        .main {
+            background-color: #0e1117;
+        }
+        .css-1d391kg { background-color: #0e1117; }
+        .css-ffhzg2 { background-color: #0e1117; }
+        .stTabs [role="tab"] {
+            background: #1e222d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 10px;
+        }
+        .stTabs [role="tab"][aria-selected="true"] {
+            background: #3b82f6;
+            color: white;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
-dark_mode = st.session_state.theme == "dark"
+st.title("Safebloq")
 
-# Apply theme styling
-if dark_mode:
-    st.markdown("""
-        <style>
-            body { background-color: #0e1117; color: white; }
-            .card {
-                background-color: #1c1e26;
-                padding: 1.5rem;
-                border-radius: 15px;
-                box-shadow: 0 0 10px #00000055;
-                margin-bottom: 1rem;
-            }
-            h1, h2, h3, h4 { color: white !important; }
-            .stButton>button { background-color: #3b82f6; color: white; border-radius: 8px; }
-        </style>
-    """, unsafe_allow_html=True)
-else:
-    st.markdown("""
-        <style>
-            .card {
-                background-color: #ffffff;
-                padding: 1.5rem;
-                border-radius: 15px;
-                box-shadow: 0 0 10px #00000022;
-                margin-bottom: 1rem;
-            }
-        </style>
-    """, unsafe_allow_html=True)
+# Simulated Security Score as a Meter Gauge (Semi-Circle)
+security_score = np.random.randint(40, 100)
 
-# Header and toggle
-st.markdown("<h1 style='text-align: left;'>Safebloq</h1>", unsafe_allow_html=True)
-st.button("Toggle Dark/Light Mode", on_click=toggle_theme)
+fig = go.Figure(go.Indicator(
+    mode="gauge+number",
+    value=security_score,
+    title={'text': "Security Score"},
+    domain={'x': [0, 1], 'y': [0, 1]},
+    gauge={
+        'shape': 'semi',
+        'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "darkgray"},
+        'bar': {'color': "darkblue"},
+        'bgcolor': "white",
+        'steps': [
+            {'range': [0, 50], 'color': "red"},
+            {'range': [50, 80], 'color': "orange"},
+            {'range': [80, 100], 'color': "green"}],
+        'threshold': {
+            'line': {'color': "black", 'width': 4},
+            'thickness': 0.75,
+            'value': security_score}
+    }
+))
 
-# Tabs
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["Dashboard", "Devices", "Reports", "Support", "Team"])
+fig.update_layout(
+    margin=dict(l=20, r=20, t=30, b=0),
+    height=300,
+    paper_bgcolor="#0e1117",
+    font={'color': "white", 'family': "Arial"},
+)
 
-# ========== TAB: DASHBOARD ==========
-with tab1:
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.metric("Active Threats", "12", "+3")
-        st.markdown('</div>', unsafe_allow_html=True)
+st.plotly_chart(fig, use_container_width=True)
 
-    with col2:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.metric("Phishing Attempts", "8", "+1")
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    with col3:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.metric("Unsafe Devices", "4", "-1")
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    # Threat Trends Graph
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("Threat Trend - Last 3 Months")
-    df = pd.DataFrame({
-        "Month": ["April", "May", "June", "April", "May", "June", "April", "May", "June"],
-        "Threat": ["Phishing", "Phishing", "Phishing", "Malware", "Malware", "Malware", "Device Risk", "Device Risk", "Device Risk"],
-        "Count": [20, 35, 18, 25, 40, 15, 30, 28, 22]
-    })
-    chart = df.pivot_table(index="Month", columns="Threat", values="Count", aggfunc="sum")
-    st.bar_chart(chart)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # Live Alerts Table
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("Live Login Alerts")
-    alert_data = pd.DataFrame({
-        "Time": ["12:01", "12:05", "12:15"],
-        "User": ["alice@corp", "bob@corp", "carol@corp"],
-        "Location": ["UK", "Germany", "India"],
-        "Status": ["Blocked", "Allowed", "Blocked"],
-        "Threat": ["Brute Force", "Clean", "Phishing"]
-    })
-    st.dataframe(alert_data)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ========== TAB: DEVICES ==========
-with tab2:
-    st.subheader("Connected Devices")
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.text("Device list and actions coming soon...")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ========== TAB: REPORTS ==========
-with tab3:
-    st.subheader("Compliance Reports")
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.text("GDPR, Cyber Essentials, and PCI templates available soon.")
-    st.button("Generate New Report")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ========== TAB: SUPPORT ==========
-with tab4:
-    st.subheader("Support & Documentation")
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("📄 [User Docs](#)\n\n🛠️ [Support Articles](#)")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ========== TAB: TEAM ==========
-with tab5:
-    st.subheader("Team Access Management")
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.text_input("Invite team member by email")
-    st.button("Send Invite")
-    st.markdown('</div>', unsafe_allow_html=True)
+# Fake Alert Summary
+st.subheader("Live Alerts")
+alerts = {
+    "Active Threats": np.random.randint(0, 10),
+    "Phishing Attempts": np.random.randint(0, 5),
+    "Outbound Denials": np.random.randint(1, 20),
+    "Unsafe Devices": np.random.randint(0, 7)
+}
+cols = st.columns(len(alerts))
+for i, (k, v) in enumerate(alerts.items()):
+    with cols[i]:
+        st.metric(label=k, value=v)
