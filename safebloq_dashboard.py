@@ -1,116 +1,91 @@
 import streamlit as st
 import pandas as pd
-import plotly.graph_objects as go
-import random
+import matplotlib.pyplot as plt
+import base64
 from datetime import datetime
+import random
 
-# Set page config
-st.set_page_config(page_title="Safebloq", layout="wide")
+st.set_page_config(page_title="Safebloq Dashboard", layout="wide")
 
-# --------- Styling ---------
-st.markdown("""
+# --- Brand Colors ---
+PRIMARY_COLOR = "#1A3C5A"
+SECONDARY_COLOR = "#00C4B3"
+BG_COLOR = "#F8FAFC"
+
+st.markdown(f"""
     <style>
-    body {
-        color: white;
-        background-color: #0e1117;
-    }
-    .main .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-    }
-    .stTabs [data-baseweb="tab"] {
-        background-color: #1e1e2f;
-        color: white;
-        padding: 1rem;
-        border-radius: 8px;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: #00aaff;
-        color: black;
-    }
+        .main {{
+            background-color: {BG_COLOR};
+        }}
+        .css-1rs6os.edgvbvh3 {{
+            background-color: {PRIMARY_COLOR};
+        }}
+        .stButton > button {{
+            background-color: {SECONDARY_COLOR};
+            color: white;
+        }}
     </style>
 """, unsafe_allow_html=True)
 
-# --------- Simulated Data ---------
-security_score = random.randint(50, 100)
-active_threats = random.randint(0, 15)
-phishing_attempts = random.randint(0, 10)
-outbound_denials = random.randint(0, 20)
-unsafe_devices = random.randint(0, 5)
+# --- Sidebar ---
+st.sidebar.image("https://i.ibb.co/BwFdVBP/safebloq-logo.png", width=180)
+menu = st.sidebar.radio("Navigation", ["Dashboard", "Devices", "Reports"])
 
-# --------- Header ---------
-st.title("Safebloq")
+# --- Dummy Data ---
+alerts = pd.DataFrame({
+    "Time": pd.date_range(end=datetime.now(), periods=5, freq='h'),
+    "Alert": ["Unauthorized login", "Suspicious file", "Blocked IP", "Phishing email", "Malware detected"],
+    "Severity": ["High", "Medium", "High", "Low", "Critical"]
+})
 
-# --------- Security Score Gauge ---------
-st.subheader("Security Score")
-fig = go.Figure(go.Indicator(
-    mode="gauge+number",
-    value=security_score,
-    domain={'x': [0, 1], 'y': [0, 1]},
-    gauge={
-        'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "white"},
-        'bar': {'color': "white"},
-        'steps': [
-            {'range': [0, 40], 'color': "red"},
-            {'range': [40, 70], 'color': "orange"},
-            {'range': [70, 100], 'color': "green"}
-        ],
-        'threshold': {
-            'line': {'color': "white", 'width': 4},
-            'thickness': 0.75,
-            'value': security_score
-        }
-    }
-))
-fig.update_layout(
-    height=300,
-    margin=dict(t=0, b=0, l=0, r=0),
-    paper_bgcolor="#0e1117",
-    font=dict(color="white")
-)
-st.plotly_chart(fig, use_container_width=True)
+devices = pd.DataFrame({
+    "Device Name": ["Laptop-A1", "POS-Terminal-2", "Server-3", "Phone-B4"],
+    "Status": ["Secure", "Under Review", "Secure", "At Risk"],
+    "Last Check-in": [datetime.now().strftime("%Y-%m-%d %H:%M")]*4
+})
 
-# --------- Live Alerts Overview ---------
-st.subheader("Live Alerts Overview")
-col1, col2, col3, col4 = st.columns(4)
-col1.metric("Active Threats", active_threats)
-col2.metric("Phishing Attempts", phishing_attempts)
-col3.metric("Outbound Denials", outbound_denials)
-col4.metric("Unsafe Devices", unsafe_devices)
+security_score = random.randint(65, 95)
 
-# --------- Tabs ---------
-tabs = st.tabs(["Devices", "Reports", "Invite Team", "Support"])
+# --- Dashboard Page ---
+if menu == "Dashboard":
+    st.title("🔐 Safebloq Zero Trust Dashboard")
+    
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Security Score", f"{security_score} / 100")
+    col2.metric("Active Alerts", str(len(alerts)))
+    col3.metric("Devices Monitored", str(len(devices)))
 
-# Devices Tab
-with tabs[0]:
-    st.subheader("Connected Devices")
-    st.dataframe(pd.DataFrame({
-        "Device Name": ["Laptop-01", "Server-02", "Mobile-03"],
-        "Status": ["Secure", "Threat Detected", "Outdated"],
-        "Last Seen": ["2025-06-30", "2025-06-29", "2025-06-28"]
-    }))
+    st.subheader("📊 Threat Trends")
+    fig, ax = plt.subplots()
+    threats = [5, 10, 8, 4, 12]
+    dates = pd.date_range(end=datetime.now(), periods=5).strftime("%b %d")
+    ax.plot(dates, threats, marker='o', color=SECONDARY_COLOR)
+    ax.set_ylabel("Detections")
+    st.pyplot(fig)
 
-# Reports Tab
-with tabs[1]:
-    st.subheader("Compliance Reports")
-    st.info("Download latest GDPR, ISO27001, and Cyber Essentials reports.")
-    st.download_button("Download GDPR Report", data="Fake GDPR content", file_name="gdpr_report.pdf")
+    st.subheader("🚨 Recent Alerts")
+    st.dataframe(alerts)
 
-# Invite Team Tab
-with tabs[2]:
-    st.subheader("Invite Team Members")
-    email = st.text_input("Team Member Email")
-    if st.button("Send Invite"):
-        st.success(f"Invitation sent to {email}")
+# --- Devices Page ---
+elif menu == "Devices":
+    st.title("🖥️ Monitored Devices")
+    st.table(devices)
 
-# Support Tab
-with tabs[3]:
-    st.subheader("Support")
-    with st.expander("User Docs"):
-        st.write("Instructions on how to use Safebloq")
-    with st.expander("Support Docs"):
-        st.write("Troubleshooting and technical references")
+# --- Reports Page ---
+elif menu == "Reports":
+    st.title("📄 Generate Daily Report")
 
-# Footer
-st.markdown("---")
-st.caption("© 2025 Safebloq. All rights reserved.")
+    report_content = f"""
+    Safebloq Security Report - {datetime.now().strftime('%Y-%m-%d')}
+
+    Security Score: {security_score}
+    Active Alerts: {len(alerts)}
+    Devices Monitored: {len(devices)}
+
+    Recent Alerts:
+    {alerts.to_string(index=False)}
+    """
+
+    b64 = base64.b64encode(report_content.encode()).decode()
+    href = f'<a href="data:file/txt;base64,{b64}" download="Safebloq_Report.txt">📥 Download Report</a>'
+    st.markdown(href, unsafe_allow_html=True)
